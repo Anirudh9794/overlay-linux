@@ -1,0 +1,23 @@
+!
+hostname bgpd
+password zebra
+log file /var/log/quagga/bgpd.log
+bgp log-neighbor-changes
+!
+
+!-- bgp router has AS 200
+router bgp 200
+
+ !-- router ip
+ bgp router-id 172.17.0.3
+
+ redistribute kernel
+ redistribute connected
+
+ !--- 'network' are routes owned by the bgp router. Inside the AS
+ network 2.2.2.0/24
+
+ !-- bgp peer router 172.17.0.2 with AS 100
+ neighbor 172.17.0.2 remote-as 100
+
+end

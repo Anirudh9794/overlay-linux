@@ -1,0 +1,38 @@
+######################################################################################
+# USAGE
+# sudo ansible-playbook -i hosts.ini -l [HOST] -e '{"vpc_id": [VPC_ID], "edge_count": [NUMBER OF EDGES IN THE VPC], "subnet_id": [SUBNET ID TO BE CREATED], "ip_address": [IP ADDRESS] }'
+######################################################################################
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  vars:
+    vpc_id: 1
+    edge_count: 1
+    subnet_id: 1
+    ip_address: ""
+  tasks:
+    - name: Copy the bgp config directory
+      copy:
+        src: bgp/
+        dest: /home/{{ ansible_user }}/bgp
+    - name: Create temporary directory
+      file:
+        path: /home/{{ ansible_user }}/.oaas
+        state: directory
+    - name: Copy create subnet scripts
+      copy:
+        src: scripts/createSubnet.sh
+        dest: /home/{{ ansible_user }}/.oaas/createSubnet.sh
+        mode: 0777
+    - name: Execute the scripts with ip address
+      command:
+        chdir: "/home/{{ ansible_user }}/.oaas"
+        cmd: "bash createSubnet.sh -s {{ subnet_id }} -v {{ vpc_id }} -c {{ edge_count - 1 }} -a {{ ip_address }}"
+      when: ip_address | length > 0
+    - name: Execute the scripts without ip address
+      command:
+        chdir: "/home/{{ ansible_user }}/.oaas"
+        cmd: "bash createSubnet.sh -s {{ subnet_id }} -v {{ vpc_id }} -c {{ edge_count - 1 }}"
+      when: ip_address | length == 0
+
+

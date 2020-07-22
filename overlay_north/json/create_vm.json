@@ -1,0 +1,8 @@
+{
+    "customerName": "customer1",
+    "vpcName": "vpc1",
+    "host": "Host1",
+    "subnetIp": "192.168.2.0/24",
+    "ipAddress": "192.168.2.2/24",
+    "vmName": "vm1"
+}

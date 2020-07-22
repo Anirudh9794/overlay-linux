@@ -1,0 +1,10 @@
+!
+hostname Router
+password zebra
+log file /var/log/quagga/zebra.log
+debug zebra events
+debug zebra fpm
+debug zebra kernel
+debug zebra packet
+debug zebra rib
+!

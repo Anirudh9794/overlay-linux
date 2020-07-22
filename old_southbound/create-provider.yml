@@ -1,0 +1,29 @@
+# ==== USAGE ====
+# ansible-playbook create-provider.yml
+# ================
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  # vars:
+  #   creation_vars:
+  #     - { subnet_id: 1, vpc_id: 1}
+
+  tasks:
+    - name: Transfer the create provider script
+      copy:
+        src: scripts/create_provider.sh
+        dest: /home/ece792/create_provider.sh
+        mode: 0777
+    - name: Ececute the create provider script in host
+      command: "sh /home/ece792/create_provider.sh {{ inventory_hostname[-1] }}"
+    
+    - name: Transfer the create GRE tunnel script
+      copy:
+        src: scripts/createGRETunnel.sh
+        dest: /home/ece792/createGRETunnel.sh
+        mode: 0777
+    - name: Execute the create GRE tunnel script
+      command: "sh /home/ece792/createGRETunnel.sh -n transitgre -p provider -r 3.3.50.1 -l 3.3.{{ inventory_hostname[-1] }}"
+    
+    - name: Add route to the gre tunnel
+      command: "ip netns exec provider ip route add 2.2.0.0/16 dev transitgre"

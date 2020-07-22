@@ -1,0 +1,39 @@
+# ==== USAGE ====
+# ansible-playbook create-provider.yml
+# ================
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  ignore_errors: yes
+  vars:
+    creation_vars:
+      - { subnet_id: 1, vpc_id: 1}
+    
+  tasks:
+    - name: transfer create transit script
+      copy:
+        src: scripts/create_transit.sh
+        dest: /home/ece792/create_transit.sh
+        mode: 0777
+      when: inventory_hostname == 'host1'
+    - name: Execute create transit script
+      command: "sh /home/ece792/create_transit.sh -a 1 -b 2"
+      when: inventory_hostname == 'host1'
+    - name: Transfer the script
+      copy:
+        src: scripts/createGRETunnel.sh
+        dest: /home/ece792/createGRETunnel.sh
+        mode: 0777
+      when: inventory_hostname == "host1" 
+
+    - name: Execute the create GRE tunnel script (prov1 tunnel)
+      command: "sh /home/ece792/createGRETunnel.sh -n prov1 -p transit -r 3.3.1.1 -l 3.3.50.1"
+      when: inventory_hostname == 'host1'
+
+    - name: Execute the create GRE tunnel script (prov2 tunnel)
+      command: "sh /home/ece792/createGRETunnel.sh -n prov2 -p transit -r 3.3.2.1 -l 3.3.50.1"
+      when: inventory_hostname == 'host1'
+
+    - name: Add routes from host2 to transit
+      command: "ip route add 3.3.50.0/24 via {{ hostvars['host1'].ansible_host }}"
+      when: inventory_hostname == "host2"

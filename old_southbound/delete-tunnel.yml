@@ -1,0 +1,11 @@
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  tasks:
+    - name: Delete GRE tunnel in host1
+      command: "ip netns del transit"
+      when: inventory_hostname == "host1"
+
+    - name: un-register the route to the transit in host2
+      command: "ip route del 3.3.50.0/24"
+      when: inventory_hostname == "host2"

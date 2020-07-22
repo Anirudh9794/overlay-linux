@@ -1,0 +1,31 @@
+- hosts: webservers
+  sudo: yes
+  vars:
+    creation_vars:
+      - { vpc_id: "51", subnet_id: "50" }
+  tasks:
+    - name: going into subnet namespace and adding ip
+      shell: "ip netns exec subnet{{item.vpc_id}}-{{item.subnet_id}} ip addr add 1.{{ item.vpc_id }}.{{item.subnet_id}}.1/24 dev s{{item.subnet_id}}e{{item.vpc_id}}0"
+      with_items: "{{creation_vars}}"
+    - name: going into edge ns and adding ip
+      shell: "ip netns exec edge{{item.vpc_id}} ip addr add 1.{{ item.vpc_id }}.{{item.subnet_id}}.2/24 dev s{{item.subnet_id}}e{{item.vpc_id}}1"
+      with_items: "{{creation_vars}}"
+    - name: going into edge namespace and adding ip for provider interface
+      shell: "ip netns exec edge{{item.vpc_id}} ip addr add 2.2.{{item.vpc_id}}.1/24 dev e{{item.vpc_id}}p0"
+      ignore_errors: yes
+      with_items: "{{creation_vars}}"
+    - name: going into provider namespace and adding ip
+      shell: "ip netns exec provider ip addr add 2.2.{{item.vpc_id}}.2/24 dev e{{item.vpc_id}}p1"
+      ignore_errors: yes
+      with_items: "{{creation_vars}}"
+    - name: adding routes in the subnet
+      shell: "ip netns exec subnet{{item.vpc_id}}-{{item.subnet_id}} ip route add default via 1.{{ item.vpc_id }}.{{item.subnet_id}}.2"
+      ignore_errors: yes
+      with_items: "{{creation_vars}}"
+    - name: adding routes in the edge namespace
+      shell: "ip netns exec edge{{item.vpc_id}} ip route add default via 2.2.{{item.vpc_id}}.2"
+      ignore_errors: yes
+      with_items: "{{creation_vars}}"
+    - name: adding ip table rules to the edge namespace
+      shell: "ip netns exec edge{{item.vpc_id}} iptables -t nat -A POSTROUTING -o e{{item.vpc_id}}p0 -j MASQUERADE "
+      with_items: "{{creation_vars}}"

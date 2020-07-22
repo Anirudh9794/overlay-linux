@@ -1,0 +1,30 @@
+!
+! This is the EDGE router.
+!
+hostname bgpd
+password zebra
+log file /var/log/quagga/bgpd.log
+debug bgp updates
+!
+
+!-- bgp router has AS 100
+router bgp 200
+
+ !-- router ip
+ bgp router-id 20.20.20.20
+! bgp router-id 2.5.0.1
+
+ redistribute kernel
+ redistribute connected
+
+ !--- 'network' are routes owned by the bgp router. Inside the AS
+ network 1.5.5.0/24
+
+ !neighbor 7.2.0.1 remote-as 100
+ !neighbor 7.2.0.1 disable-connected-check
+ !neighbor 7.2.0.1 ttl-security hops 252
+
+ neighbor 20.20.20.10 remote-as 100
+ neighbor 20.20.20.10 disable-connected-check
+ neighbor 20.20.20.10 ttl-security hops 252
+end

@@ -1,0 +1,62 @@
+To run add-address-subnet.yml file -
+Usage - ansible-playbook add-address-subnet.yml -i hosts.ini -e '{ "creation_vars": [{"subnet_id": 1, "vpc_id": 1, "subnet": "192.168.1.0", "subnet_mask": "/24" }]}'
+
+To run add-addresses.yml file -
+Usage - ansible-playbook add-addresses.yml -i hosts.ini -e '{ "creation_vars": [{ "vpc_id": 51, "subnet_id": 50 }]}'
+
+To run add-transit-routes.yml file -
+Usage - ansible-playbook add-transit-routes.yml -i hosts.ini -e '{"route_vars": [ {"vpc_id": 1, "provider_id": 1}, {"vpc_id": 2, "provider_id": 2} ]}'
+
+To run configure-vxlan.yml file -
+Usage - ansible-playbook configure-vxlan.yml -i hosts.ini -e '{ "mac_list": "5e:4c:af:6e:25:d7", "remote_vpc": 3, "remote_subnet": 1, "local_vpc": 4, "local_subnet": 1 }'
+
+To run connect-vpc.yml file -
+Usage - sudo ansible-playbook -i hosts.ini connect_vpc.yml -e '{"subnets": [list of subnets in remote vpc], "local_vpc": <local vpc id>, "remote_vpc": <remote vpc id>}' -l <host of local_vpc>
+
+To run create-provider.yml file -
+Usage - ansible-playbook create-provider.yml 
+
+To run create-subnet.yml file -
+Usage - sudo ansible-playbook -i hosts.ini create-subnet.yml -e '{ "creation_vars": [{ "subnet_id": 1, "vpc_id": 1 }]}'
+
+To run create-vms.yml file -
+Usage - sudo anisble-playbook create-vms.yml -i hosts.ini -l host1 -e '{ "guests": [{"name": "vm_vxlan4", "subnet_id": 50, "vpc_id": 50, "vm_id": 5, "mac_address": "5e:4c:af:6e:25:e0"}]}'
+
+To run create-vxlan.yml file -
+Usage - sudo anisble-playbook create-vms.yml -i hosts.ini -e '{ "local_vpc": 51, "remote_vpc": 50, "local_subnet": 50, "remote_subnet": 50}'
+
+To run delete-gre.yml file -
+Usage - sudo ansible-playbook -i hosts.ini delete-gre.yml -e { "deletion_vars":[{"vpc1: 1", "provider1: 1", "vpc2: 2", "provider2: 2"}]}
+
+To run delete-tunnel.yml file -
+Usage - sudo ansible-playbook -i hosts.ini delete-tunnel.yml
+
+To run delete-vpc.yml file -
+Usage - sudo ansible-playbook -i hosts.ini delete-vpc.yml
+
+To run deleting_edges.yml file -
+Usage - sudo ansible-playbook -i hosts.ini deleting_edges.yml -e '{"creation_vars": [{"vpc_id": 1}]}'
+
+To run deleting_subnets.yml file -
+Usage - sudo ansible-playbook -i hosts.ini deleting_subnets.yml -e '{"creation_vars": [{"subnet_id": 1, "vpc_id": 1}]}'
+
+To run deleting_vms.yml file -
+Usage - sudo ansible-playbook -i hosts.ini deleting_vms.yml -e '{"vm_names": ["vm1"]}'
+
+To run init-gre.yml file -
+Usage - sudo ansible-playbook -i hosts.ini init-gre.yml
+
+To start the server -
+Usage - sudo python3 overlay.py <Provide the host for the provider ns>
+
+To run edge-route-to-host.yml file -
+Usage - sudo ansible-playbook edge-route-to-host.yml -i hosts.ini -e '{ "creation_vars": [{ "vpc_id": 1, "edge_number": 1 }]}' -l host1 
+
+To run create-edges.yml file -
+Usage - sudo ansible-playbook create-edges.yml -i hosts.ini -e '{ "creation_vars": [{ "vpc_id": 1, "edge_number": 1 }]}' -l host1 
+
+To run delete-edges.yml file -
+Usage - sudo ansible-playbook delete-edges.yml -i hosts.ini -e '{ "creation_vars": [{ "vpc_id": 1, "edge_number": 1 }]}' -l host1
+
+To run delete-routes-to-edges.yml file -
+Usage - sudo ansible-playbook delete-routes-to-edges.yml -i hosts.ini -e '{ "creation_vars": [{ "vpc_id": 1, "edge_number": 1 }]}' -l host1 

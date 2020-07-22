@@ -1,0 +1,66 @@
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  vars:
+    creation_vars:
+      - { subnet_id: "1", vpc_id: "1" }
+
+  tasks:
+    - name: Create edge namespace
+      shell: (ip netns list | grep edge{{ item.vpc_id }} ) || \
+        (ip netns add edge{{ item.vpc_id }})
+      with_items: "{{ creation_vars }}"
+
+    - name: Create subnet namespace
+      shell: (ip netns list | grep subnet{{ item.vpc_id}}-{{ item.subnet_id }} ) || \
+        (ip netns add subnet{{ item.vpc_id}}-{{ item.subnet_id }})
+      with_items: "{{ creation_vars }}"
+
+    - name: Create subnet to edge veth pair
+      shell: |
+        (ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip link show s{{ item.subnet_id }}e{{ item.vpc_id }}0) || \
+        ( ip link add s{{ item.subnet_id }}e{{ item.vpc_id }}0 type veth peer name s{{ item.subnet_id }}e{{ item.vpc_id }}1 &&\
+          ip link set s{{ item.subnet_id }}e{{ item.vpc_id }}0 netns subnet{{ item.vpc_id}}-{{ item.subnet_id }} && \
+          ip link set s{{ item.subnet_id }}e{{ item.vpc_id }}1 netns edge{{ item.vpc_id }} && \
+          ip netns exec edge{{ item.vpc_id }} ip link set s{{ item.subnet_id }}e{{ item.vpc_id }}1 up && \
+          ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip link set s{{ item.subnet_id }}e{{ item.vpc_id }}0 up \
+        )
+      with_items: "{{ creation_vars }}"
+
+    - name: Create edge to provider veth if not exists
+      shell: (ip netns exec edge{{ item.vpc_id }} ip link show e{{ item.vpc_id }}p0 ) || \
+        ( \
+          (ip link add e{{ item.vpc_id }}p0 type veth peer name e{{ item.vpc_id }}p1) && \
+          (ip link set e{{ item.vpc_id }}p0 netns edge{{ item.vpc_id }}) && \
+          (ip link set e{{ item.vpc_id }}p1 netns provider) && \
+          (ip netns exec provider ip link set e{{ item.vpc_id }}p1 up) && \
+          (ip netns exec edge{{ item.vpc_id }} ip link set e{{ item.vpc_id }}p0 up)
+        )
+      with_items: "{{ creation_vars }}"
+
+    - name: Creating Bridge inside namespace
+      shell: ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} brctl show | grep br{{item.subnet_id}} || \
+        (ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} brctl addbr br{{ item.subnet_id }})
+      with_items: "{{ creation_vars }}"
+
+    - name: Set bridge up
+      shell: "ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip link set br{{ item.subnet_id }} up"
+      with_items: "{{ creation_vars }}"
+
+    - name: Create bridge to subnet veth pair
+      shell: (ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip link show b{{ item.subnet_id }}s{{ item.subnet_id }}0) || \
+        (ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip link add b{{ item.subnet_id }}s{{ item.subnet_id }}0 type veth peer name b{{ item.subnet_id }}s{{ item.subnet_id }}1)
+      with_items: "{{ creation_vars }}"
+
+    - name: move veth to bridge
+      shell: |
+        (ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} brctl show | grep b{{ item.subnet_id }}s{{ item.subnet_id }}0) || \
+        (ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} brctl addif br{{ item.subnet_id }} b{{ item.subnet_id }}s{{ item.subnet_id }}0 && \
+          ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip link set b{{ item.subnet_id }}s{{ item.subnet_id }}0 up && \
+          ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip link set b{{ item.subnet_id }}s{{ item.subnet_id }}1 up)
+      with_items: "{{ creation_vars }}"
+
+    - name: Move veth to subnet
+      shell: (ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip link show b{{ item.subnet_id }}s{{ item.subnet_id }}1) || \
+       (ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip link set b{{ item.subnet_id }}s{{ item.subnet_id }}1 netns subnet{{ item.vpc_id}}-{{ item.subnet_id }})
+      with_items: "{{ creation_vars }}"

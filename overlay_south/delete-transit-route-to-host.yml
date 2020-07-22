@@ -1,0 +1,20 @@
+- gather_facts: true
+  hosts: webservers
+  sudo: true
+  vars:
+    creation_vars:
+      - {router_number: '0', transit_id: '7' }
+
+  tasks:
+
+    - name: "Delete the route in host1"
+      shell: "ip route del 7.{{item.transit_id}}.{{item.router_number}}.0/24 via {{ hostvars['host1'].ansible_host }}"
+      with_items: "{{ creation_vars }}"
+      when: inventory_hostname == 'host2'
+      ignore_errors: yes 
+    - name: "Delete the route"
+      shell: "ip route del 2.{{item.transit_id}}.{{item.router_number}}.0/24 via {{ hostvars['host2'].ansible_host }}"
+      with_items: "{{ creation_vars }}"
+      when: inventory_hostname == 'host1'
+      ignore_errors: yes 
+

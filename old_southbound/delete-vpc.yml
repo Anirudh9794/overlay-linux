@@ -1,0 +1,13 @@
+# delete vpc
+# Delete vpc and all the subnets of the vpc
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  ignore_errors: yes
+  tasks:
+    - name: Transfer the script
+      copy:
+        src: scripts/delete_edges.sh
+        dest: /home/ece792/delete_edges.sh
+        mode: 0777
+    - 

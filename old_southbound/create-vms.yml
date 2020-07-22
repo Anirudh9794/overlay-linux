@@ -1,0 +1,42 @@
+- hosts: webservers
+  gather_facts: no
+  vars:
+    guests:
+      - { name: "vm_vxlan4", subnet_id: 50, vpc_id: 50, vm_id: 5, mac_address: "5e:4c:af:6e:25:e0" }
+# sudo anisble-playbook create-vms.yml -i hosts.ini -l host1 
+  tasks:
+    - name: Copy disk image from current directory
+      command: "sudo cp /home/ece792/base-image.img /var/lib/libvirt/images/{{ item.name }}.img"
+      with_items: "{{ guests }}"
+    - name: Create the VMs
+      virt:
+        command: define
+        xml: "{{ lookup('template', 'vm_template.xml') }}"
+        autostart: yes
+      with_items: "{{ guests }}"
+    - name: Start the VMs
+      virt:
+        name: "{{ item.name }}"
+        state: running
+      with_items: "{{ guests }}"
+
+    - name: creating veth pair for VM to subnet
+      shell: (sudo ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip link show v{{ item.vm_id }}s1) || (sudo ip link add v{{ item.vm_id }}s0 type veth peer name v{{ item.vm_id }}s1)
+      with_items: "{{ guests }}"
+
+    - name: set vm interface up
+      shell: "sudo ip link set v{{ item.vm_id }}s0 up"
+      with_items: "{{ guests }}"
+
+    - name: attach veth end to VM
+      shell: "sudo virsh attach-interface {{ item.name }} direct v{{ item.vm_id }}s0 --mac {{ item.mac_address }} --live --persistent"
+      with_items: "{{ guests }}"
+
+    - name: attach veth end to subnet
+      shell: "(sudo ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip link show v{{ item.vm_id }}s1) || (sudo ip link set v{{ item.vm_id }}s1 netns subnet{{ item.vpc_id }}-{{ item.subnet_id }})"
+      with_items: "{{ guests }}"
+
+    - name: set subnet interface up
+      shell: "sudo ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip link set v{{ item.vm_id }}s1 up"
+      with_items: "{{ guests }}"
+

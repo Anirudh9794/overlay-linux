@@ -1,0 +1,6 @@
+{
+    "customerName": "customer1",
+    "vpcId": "2",
+    "host": "host1",
+    "ipAddress": "192.168.34.0/24"
+}

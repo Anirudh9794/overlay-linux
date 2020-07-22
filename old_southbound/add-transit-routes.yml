@@ -1,0 +1,16 @@
+##########
+# USAGE: 
+#       sudo ansible-playbook -i hosts.ini add-transit-routes.yml -e '{"route_vars": [ {"vpc_id": 1, "provider_id": 1}, {"vpc_id": 2, "provider_id": 2} ]}'
+##########
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  vars:
+    route_vars:
+            - { vpc_id: 4, provider_id: 2 }
+            - { vpc_id: 3, provider_id: 1 }
+  tasks:
+    - name: Add routes to the transit
+      shell: "(ip netns exec transit ip route | grep '2.2.{{ item.vpc_id }}.0/24 dev prov{{ item.provider_id }}') || (ip netns exec transit ip route add 2.2.{{ item.vpc_id }}.0/24 dev prov{{ item.provider_id }})"
+      when: inventory_hostname == "host1"
+      with_items: "{{ route_vars }}"

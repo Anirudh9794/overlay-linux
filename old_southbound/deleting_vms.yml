@@ -1,0 +1,14 @@
+--- 
+- 
+  gather_facts: true
+  hosts: webservers
+  sudo: true
+  tasks: 
+    - 
+      name: "Undefining the VMs"
+      shell: "virsh undefine {{ item }}"
+      with_items: "{{ vm_names }}"
+
+    - name: "Destroying the VMs"
+      shell: "virsh destroy {{ item }}"
+      with_items: "{{ vm_names }}"

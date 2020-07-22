@@ -1,0 +1,20 @@
+###############################################################################################
+## USAGE
+## sudo ansible-playbook -i hosts-ini -e '{"edge_number": [EDGE_NUMBER], "vpc_id": [VPC_ID]}' edge-route-to-host.yml
+################################################################################################
+- gather_facts: true
+  hosts: webservers
+  sudo: yes
+  vars:
+    router_number: 
+    transit_id: 
+  tasks:
+
+    - name: "Adding route from transit to host"
+      when: inventory_hostname == 'host2'
+      shell: "(ip route | grep 7.{{transit_id}}.{{router_number}}.0/24) || (ip route add 7.{{transit_id}}.{{router_number}}.0/24 via {{ hostvars['host1'].ansible_host }})"
+
+    - name: "Adding route from transit to host"
+      when: inventory_hostname == 'host1'
+      shell: "(ip route | grep 7.{{transit_id}}.{{router_number}}.0/24) || (ip route add 7.{{transit_id}}.{{router_number}}.0/24 via {{ hostvars['host2'].ansible_host }})"
+

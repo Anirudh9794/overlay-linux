@@ -1,0 +1,16 @@
+--- 
+- 
+  gather_facts: true
+  hosts: webservers
+  sudo: true
+  tasks: 
+    - 
+      name: "deleting single subnet"
+      shell: "ip netns del subnet{{ item.vpc_id }}{{ item.subnet_id }}"
+      with_items: "{{ creation_vars }}"
+  vars: 
+    creation_vars: 
+      - 
+        subnet_id: 1
+        vpc_id: 1
+

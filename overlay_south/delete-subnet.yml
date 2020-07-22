@@ -1,0 +1,19 @@
+#########################################################
+# USAGE
+# sudo ansible-playbook -i hosts.ini -l [HOST] -e '{"vpc_id": [VPC_ID], "subnet_id": [SUBNET_ID]}'
+#########################################################
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  vars:
+    vpc_id: 1
+    subnet_id: 1
+  tasks:
+    - name: delete subnet container
+      docker_container:
+        name: "S{{ subnet_id }}V{{ vpc_id }}"
+        state: absent
+    - name: Delete subnet namespace
+      shell: "ip netns del S{{ subnet_id }}V{{ vpc_id }}"
+    - name: Delete subnet container
+      shell: "docker rm -f S{{ subnet_id }}V{{ vpc_id }}"

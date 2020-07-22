@@ -1,0 +1,15 @@
+--- 
+- 
+  gather_facts: true
+  hosts: webservers
+  sudo: true
+  tasks: 
+    - 
+      name: "deleting the edges"
+      shell: "ip netns del edge{{ item.vpc_id }}"
+      with_items: "{{ creation_vars }}"
+  vars: 
+    creation_vars: 
+      - 
+        subnet_id: 1
+        vpc_id: 1

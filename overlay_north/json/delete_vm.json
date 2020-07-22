@@ -1,0 +1,26 @@
+{
+    "customerName": "customer1",
+    "vmNames": [
+        {
+            "host": "Host1",
+            "vmName": "vm1",
+            "vmIp": "192.168.1.2/24",
+            "subnetIp": "192.168.1.0/24",
+            "vpcName": "vpc1"
+        },
+        {
+            "host": "Host1",
+            "vmName": "vm1",
+            "vmIp": "192.168.2.2/24",
+            "subnetIp": "192.168.2.0/24",
+            "vpcName": "vpc1"
+        },
+        {
+            "host": "Host1",
+            "vmName": "vm3",
+            "vmIp": "192.168.3.2/24",
+            "subnetIp": "192.168.3.0/24",
+            "vpcName": "vpc1"
+        }
+    ]
+}

@@ -1,0 +1,9 @@
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  vars:
+    vpc_id: 1
+    edge_number: 1
+  tasks:
+    - name: Restart the quagga service in the container
+      shell: "docker exec v{{ vpc_id }}E{{ edge_number }} service quaagga restart"

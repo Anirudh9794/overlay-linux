@@ -1,0 +1,84 @@
+###############################################################################################
+# USAGE
+# sudo ansible-playbook -i hosts-ini -e '{"edge_number": [EDGE_NUMBER], "vpc_id": [VPC_ID]}' create-edges.yml 
+###############################################################################################
+--- 
+- 
+  gather_facts: true
+  hosts: webservers
+  sudo: true
+  tasks:
+    - 
+      name: Copy the bgp config directory
+      copy:
+        src: bgp/
+        dest: /home/{{ ansible_user }}/bgp
+    - 
+      name: "create edge container"
+      shell: "docker run -v /home/ece792/bgp/ready/edge-{{item.vpc_id}}-{{item.edge_number}}.conf:/etc/quagga/bgpd.conf -v /home/ece792/bgp/daemons:/etc/quagga/daemons --privileged --name V{{ item.vpc_id }}E{{ item.edge_number }} -d -ti anir9794/quagga_docker"
+      with_items: "{{ creation_vars }}"
+    -
+      name: Create temporary directory
+      file:
+        path: /home/{{ ansible_user }}/.oaas
+        state: directory
+    -
+      name: Copy expose container namespace scripts
+      copy:
+        src: scripts/exposeContainerNamespace.sh
+        dest: /home/{{ ansible_user }}/.oaas/exposeContainerNamespace.sh
+        mode: 0777
+    -
+      name: Execute expose container namespace scripts
+      command:
+        chdir: "/home/{{ ansible_user }}/.oaas"
+        cmd: bash exposeContainerNamespace.sh V{{ item.vpc_id }}E{{ item.edge_number }}
+      with_items: "{{ creation_vars }}"
+    - 
+      name: "create veth pair for edge to host"
+      shell: "(ip link show | grep v{{ item.vpc_id }}e{{ item.edge_number }}1) || (ip link add v{{ item.vpc_id }}e{{ item.edge_number }}0 type veth peer name v{{ item.vpc_id }}e{{ item.edge_number }}1)"
+      with_items: "{{ creation_vars }}"
+    - 
+      name: "attach veth to edge"
+      shell: "(ip netns exec V{{ item.vpc_id }}E{{ item.edge_number }} ip link show | grep v{{ item.vpc_id }}e{{ item.edge_number }}0) || (ip link set v{{ item.vpc_id }}e{{ item.edge_number }}0 netns V{{ item.vpc_id }}E{{ item.edge_number }})"
+      with_items: "{{ creation_vars }}"
+    - 
+      name: "set veth up in host"
+      shell: "ip link set v{{ item.vpc_id }}e{{ item.edge_number }}1 up"
+      with_items: "{{ creation_vars }}"
+    - 
+      name: "set veth up in edge"
+      shell: "ip netns exec V{{ item.vpc_id }}E{{ item.edge_number }} ip link set v{{ item.vpc_id }}e{{ item.edge_number }}0 up"
+      with_items: "{{ creation_vars }}"
+    - 
+      name: "add iptables rule in edge"
+      shell: "ip netns exec V{{ item.vpc_id }}E{{ item.edge_number }} iptables -t nat -A POSTROUTING -o v{{ item.vpc_id }}e{{ item.edge_number }}0 -j MASQUERADE"
+      with_items: "{{ creation_vars }}"
+    - 
+      name: "add ip addresses to veth pair in edge"
+      shell: "(ip netns exec V{{ item.vpc_id }}E{{ item.edge_number }} ip addr | grep 2.{{ item.vpc_id }}.{{ item.edge_number }}.1) || (ip netns exec V{{ item.vpc_id }}E{{ item.edge_number }} ip addr add 2.{{ item.vpc_id }}.{{ item.edge_number }}.1/24 dev v{{ item.vpc_id }}e{{ item.edge_number }}0)"
+      with_items: "{{ creation_vars }}"
+    - 
+      name: "add ip addresses to veth pair in edge"
+      shell: "(ip addr | grep 2.{{ item.vpc_id }}.{{ item.edge_number }}.2) || (ip addr add 2.{{ item.vpc_id }}.{{ item.edge_number }}.2/24 dev v{{ item.vpc_id }}e{{ item.edge_number }}1)"
+      with_items: "{{ creation_vars }}"
+    -
+      name: "delete any default route"
+      shell: "ip netns exec V{{ item.vpc_id }}E{{ item.edge_number }} ip route | grep 'default' && ip netns exec V{{ item.vpc_id }}E{{ item.edge_number }} ip route del default"
+      with_items: "{{ creation_vars }}"
+      ignore_errors: yes
+    -
+      name: "Add default route"
+      shell: "ip netns exec V{{ item.vpc_id }}E{{ item.edge_number }} ip route add default via 2.{{ item.vpc_id }}.{{ item.edge_number }}.2"
+      with_items: "{{ creation_vars }}"
+    # -
+    #   name: "Add iptable rule in host"
+    #   shell: "iptables -t nat -A POSTROUTING -s 2.{{ item.vpc_id }}.{{ item.edge_number }}.0/24 ! -d 2.{{ item.vpc_id }}.{{ item.edge_number }}.0/24 -j MASQUERADE"
+    #   with_items: "{{ creation_vars }}"
+
+  vars: 
+    creation_vars: 
+      - 
+        edge_number: 1
+        vpc_id: 1
+

@@ -1,0 +1,40 @@
+FROM ubuntu:16.04
+
+MAINTAINER EB2-2027
+
+RUN apt-get update
+RUN apt-get -y install iproute2
+RUN apt-get -y install telnet
+RUN apt-get -y install openssh-server
+
+RUN apt-get -y install iptables
+RUN apt-get -y install iputils-ping
+RUN apt-get -y install traceroute
+RUN apt-get -y install tcpdump
+RUN apt-get -y install iperf
+RUN apt-get -y install vim
+RUN apt-get -y install python
+RUN apt-get -y install python-pip
+RUN pip install --upgrade pip
+RUN apt-get -y install python-pexpect
+RUN pip install paramiko
+RUN apt-get -y install nano
+RUN apt-get -y install quagga
+RUN apt-get -y install vim
+RUN apt-get -y install nmap
+
+RUN mv /usr/sbin/tcpdump /usr/bin/tcpdump
+RUN ln -s /usr/bin/tcpdump /usr/sbin/tcpdump
+RUN cp /usr/share/doc/quagga/examples/zebra.conf.sample /etc/quagga/zebra.conf
+RUN cp /usr/share/doc/quagga/examples/ospfd.conf.sample /etc/quagga/ospfd.conf
+RUN cp /usr/share/doc/quagga/examples/ripd.conf.sample /etc/quagga/ripd.conf
+RUN cp /usr/share/doc/quagga/examples/bgpd.conf.sample /etc/quagga/bgpd.conf
+RUN cp /usr/share/doc/quagga/examples/vtysh.conf.sample /etc/quagga/vtysh.conf
+
+RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
+
+RUN chown quagga:quagga /etc/quagga/*.conf
+RUN chown quagga.quaggavty /etc/quagga/*.conf
+RUN chmod 640 /etc/quagga/*.conf
+
+CMD service quagga start && tail -f /dev/null

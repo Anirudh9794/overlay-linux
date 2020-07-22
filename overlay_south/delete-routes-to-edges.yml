@@ -1,0 +1,20 @@
+- gather_facts: true
+  hosts: webservers
+  sudo: true
+  vars:
+    creation_vars:
+      - {edge_number: '1', vpc_id: '8' }
+      - {edge_number: '0', vpc_id: '8' }
+
+  tasks:
+
+    - name: "Delete the route in host1"
+      shell: "ip route del 2.{{item.vpc_id}}.{{item.edge_number}}.0/24 via {{ hostvars['host1'].ansible_host }}"
+      with_items: "{{ creation_vars }}"
+      when: inventory_hostname == 'host2'
+      ignore_errors: yes 
+    - name: "Delete the route"
+      shell: "ip route del 2.{{item.vpc_id}}.{{item.edge_number}}.0/24 via {{ hostvars['host2'].ansible_host }}"
+      with_items: "{{ creation_vars }}"
+      when: inventory_hostname == 'host1'
+      ignore_errors: yes 

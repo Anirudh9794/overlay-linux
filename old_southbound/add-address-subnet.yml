@@ -1,0 +1,10 @@
+- hosts: webservers
+  sudo: yes
+  vars:
+    creation_vars:
+      - {subnet_id: "1", vpc_id: "1", subnet: "192.168.1.0", subnet_mask: "/24" }
+
+  tasks:
+    - name: add an ip to the bridge to subnet interface
+      shell: "ip netns exec subnet{{ item.vpc_id}}-{{ item.subnet_id }} ip addr add {{item.subnet.split('.')[0]}}.{{item.subnet.split('.')[1]}}.{{item.subnet.split('.')[2]}}.1{{item.subnet_mask}} dev b{{ item.subnet_id }}s{{ item.subnet_id }}1"
+      with_items: "{{creation_vars}}"

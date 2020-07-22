@@ -1,0 +1,28 @@
+#########################################################################################################
+# Usage
+# sudo ansible-playbook -i hosts.ini -l [HOST] -e '{"reliability_factor": 2, "transit_id": 1}' create-transit.yml
+#########################################################################################################
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  vars:
+    reliability_factor: 2
+    transit_id: 1
+  tasks:
+    - name: Copy the bgp config directory
+      copy:
+        src: bgp/
+        dest: /home/{{ ansible_user }}/bgp
+    - name: Create temporary directory
+      file:
+        path: /home/{{ ansible_user }}/.oaas
+        state: directory
+    - name: Copy create transit scripts
+      copy:
+        src: scripts/createTransit.sh
+        dest: /home/{{ ansible_user }}/.oaas/createTransit.sh
+        mode: 0777
+    - name: Execute the crate transit scripts
+      command:
+        chdir: "/home/{{ ansible_user }}/.oaas"
+        cmd: "bash createTransit.sh -r {{ reliability_factor }} -i {{ transit_id }}"

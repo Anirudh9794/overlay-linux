@@ -1,0 +1,28 @@
+#########################################################################################################
+# Usage
+# NOT TESTED
+#########################################################################################################
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  vars:
+    reliability_factor: 2
+    transit_id: 1
+  tasks:
+    - name: Create temporary directory
+      file:
+        path: /home/{{ ansible_user }}/.oaas
+        state: directory
+    - name: Copy create GRE tunnel scripts
+      copy:
+        src: scripts/createGRETunnelAtTransit.sh
+        dest: /home/{{ ansible_user }}/.oaas/createGRETunnelAtTransit.sh
+        mode: 0777
+    - name: Copy new configuration files
+      copy:
+        src: bgp/ready/
+        dest: /home/{{ ansible_user }}/bgp/ready
+    - name: Execute the crate GRE tunnel scripts
+      command:
+        chdir: "/home/{{ ansible_user }}/.oaas"
+        cmd: "bash createGRETunnelAtTransit.sh -v {{ vpc_id }} -s {{ scalability_factor }} -r {{ reliability_factor }} -t {{ transit_id }}"

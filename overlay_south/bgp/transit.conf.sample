@@ -1,0 +1,40 @@
+!
+! This is the TRANSIT router. It knows all...
+!
+hostname bgpd
+password zebra
+log file /var/log/quagga/bgpd.log
+debug bgp updates
+debug bgp events
+debug bgp filters
+debug bgp keepalives
+debug bgp zebra
+debug bgp as4
+debug bgp fsm
+!
+
+!-- bgp router has AS 100
+router bgp 100
+
+ !-- router ip
+ !bgp router-id 7.2.0.1
+ bgp router-id 20.20.20.10
+
+
+redistribute kernel
+redistribute connected
+
+
+ !-- bgp peer routers...the neighbors... (172.17.0.3, 172.17.0.4) with AS 200, 300
+ !neighbor 2.5.0.1 remote-as 200
+ neighbor 20.20.20.20 remote-as 200
+
+ !-- make all next hop IP addresses to be transit for routes sent to neighbors
+ !neighbor 2.5.0.1 next-hop-self
+ !neighbor 2.5.0.1 disable-connected-check
+ !neighbor 2.5.0.1 ttl-security hops 252
+
+ neighbor 20.20.20.20 next-hop-self
+ neighbor 20.20.20.20 disable-connected-check
+ neighbor 20.20.20.20 ttl-security hops 252
+end

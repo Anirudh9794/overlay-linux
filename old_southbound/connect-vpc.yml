@@ -1,0 +1,26 @@
+#################
+# USAGE:
+#       sudo ansible-playbook -i hosts.ini connect_vpc.yml -e '{"subnets": [list of subnets in remote vpc], "local_vpc": <local vpc id>, "remote_vpc": <remote vpc id>}' -l <host of local_vpc>
+##################
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  vars:
+    subnets:
+      - "1.1.1.0/24"
+        #- "20.10.2.0/24"
+    local_vpc: 2
+    remote_vpc: 1
+  tasks:
+    - name: Transfer script to create GRE tunnel
+      copy:
+        src: scripts/createGRETunnel.sh
+        dest: /home/ece792/createGRETunnel.sh
+        mode: 0777
+
+    - name: Execute the script
+      command: "sh /home/ece792/createGRETunnel.sh -n tun{{ remote_vpc }} -p edge{{ local_vpc }} -l 2.2.{{ local_vpc }}.1 -r 2.2.{{ remote_vpc }}.1"
+
+    - name: Adding route to the subnets
+      command: "ip netns exec edge{{ local_vpc }} ip route add {{ item }} dev tun{{ remote_vpc }}"
+      with_items: "{{ subnets }}"

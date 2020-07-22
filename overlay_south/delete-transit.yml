@@ -1,0 +1,24 @@
+#########################################################################################################
+# Usage
+# sudo ansible-playbook -i hosts.ini -l [HOST] -e '{"reliability_factor": 2, "transit_id": 1}' delete-transit.yml
+#########################################################################################################
+- hosts: webservers
+  gather_facts: yes
+  sudo: yes
+  vars:
+    transit_id: 7
+    reliability_factor: 2
+  tasks:
+    - name: Create temporary directory
+      file:
+        path: /home/{{ ansible_user }}/.oaas
+        state: directory
+    - name: Copy delete transit scripts
+      copy:
+        src: scripts/deleteTransit.sh
+        dest: /home/{{ ansible_user }}/.oaas/deleteTransit.sh
+        mode: 0777
+    - name: Execute the delete transit scripts
+      command:
+        chdir: "/home/{{ ansible_user }}/.oaas"
+        cmd: "bash deleteTransit.sh -r {{ reliability_factor }} -i {{ transit_id }}"
